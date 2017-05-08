@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width">
+    <title>FB Big5</title>
+    <link rel="stylesheet" type="text/css" href="./style.css">
+    <script src="//d3js.org/d3.v4.min.js"></script>
+    <script src="./tsne.js"></script>
+</head>
+
+<body id="main">
+    <h1>FB big5 with t-SNE</h1>
+    <script src="./FBbig5.js"></script>
+    <div>
+        <form>
+            <fieldset>
+                <legend>Choose Big5 Setting</legend>
+                <label for="x">sEXT</label>
+                <input name="Big5" id="sEXT" type="checkbox" value="sEXT" checked></input>
+                <label for="x">sNEU</label>
+                <input name="Big5" id="sNEU" type="checkbox" value="sNEU" checked></input>
+                <label for="x">sAGR</label>
+                <input name="Big5" id="sAGR" type="checkbox" value="sAGR" checked></input>
+                <label for="x">sCON</label>
+                <input name="Big5" id="sCON" type="checkbox" value="sCON" checked></input>
+                <label for="x">sOPN</label>
+                <input name="Big5" id="sOPN" type="checkbox" value="sOPN" checked></input>
+                <input name="submit" id="x" type="button" value="Submit"></input>
+            </fieldset>
+        </form>
+    </div>
+    <div id="graph"></div>
+    <div id="table"></div>
+</body>
+
+</html>

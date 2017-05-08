@@ -1,0 +1,9 @@
+{
+    "extends": "google",
+    "parser": "esprima",
+    "rules": {
+        "semi": ["error", "always"],
+        "max-len": "off",
+        "new-cap": "off"
+    }
+}
