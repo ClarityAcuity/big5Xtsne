@@ -8,12 +8,13 @@ h1 {
 }
 
 fieldset {
-    border: 2px #af3333 solid;
+    border: 1px #af3333 solid;
     border-radius: 10px;
     margin: 1px;
 }
 
 svg {
+    background: white;
     border: 1px solid;
 }
 

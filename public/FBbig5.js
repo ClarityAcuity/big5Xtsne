@@ -1,8 +1,8 @@
-d3.csv('/mypersonality_final_fix.csv', function(d) {
+d3.csv('/mypersonality_final_fix.csv', function (d) {
     // console.log(columns);
     // console.log(i);
     return d;
-}, function(error, data) {
+}, function (error, data) {
     if (error) throw error;
     let fbdata = [];
     let ppl = -1;
@@ -41,9 +41,9 @@ d3.csv('/mypersonality_final_fix.csv', function(d) {
         fbdata[ppl].STATUS.push(data[i]['STATUS']);
     }
     console.log(fbdata);
-    console.log(data);
+    // console.log(data);
     let btn = document.querySelector('input[type="button"]');
-    btn.addEventListener('click', function() {
+    btn.addEventListener('click', function () {
         // console.log("on")
         submit(fbdata);
     });
@@ -52,7 +52,7 @@ d3.csv('/mypersonality_final_fix.csv', function(d) {
 /**
  * return n*n matrix
  * @param {number} n - *n matrix
- * @return {array}
+ * @return {object} - array
  */
 function initMat(n) {
     let mat = [];
@@ -83,7 +83,7 @@ function distance(a, b) {
 
 /**
  * find  max num in Mat
- * @param {array} Mat - Mat
+ * @param {object} Mat - Mat array
  * @return {number}
  */
 function MatMax(Mat) {
@@ -99,37 +99,31 @@ function MatMax(Mat) {
 }
 
 /**
- * normalize a dist
- * @param {array} dists - dist
- * @return {array}
- */
-function normalize(dists) {
-    let max = MatMax(dists);
-    // console.log(max)
-    let n = dists.length;
-    for (let i = 0; i < n; i++) {
-        for (let j = 0; j < n; j++) {
-            dists[i][j] = dists[i][j] / max;
-        }
-    }
-    return dists;
-}
-
-/**
  * get big5dist dists
  * @param {object} data - source data object
- * @return {array}
+ * @return {object} - array
  */
 function big5dist(data) {
+    let checked = formchecked('Big5');
     let pointlist = [];
     for (let i = 0; i < data.length; i++) {
         let point = [];
         point.push(data[i].AUTHID);
-        point.push(data[i].BIG5.sEXT);
-        point.push(data[i].BIG5.sNEU);
-        point.push(data[i].BIG5.sAGR);
-        point.push(data[i].BIG5.sCON);
-        point.push(data[i].BIG5.sOPN);
+        if (checked.sEXT) {
+            point.push(data[i].BIG5.sEXT);
+        }
+        if (checked.sNEU) {
+            point.push(data[i].BIG5.sNEU);
+        }
+        if (checked.sAGR) {
+            point.push(data[i].BIG5.sAGR);
+        }
+        if (checked.sCON) {
+            point.push(data[i].BIG5.sCON);
+        }
+        if (checked.sOPN) {
+            point.push(data[i].BIG5.sOPN);
+        }
         pointlist.push(point);
     }
     // console.log(pointlist)
@@ -148,20 +142,35 @@ function big5dist(data) {
 /**
  * get network properties dist
  * @param {object} data - source data object
- * @return {array}
+ * @return {object}
  */
 function propertydist(data) {
+    let checked = formchecked('Property');
     let pointlist = [];
     for (let i = 0; i < data.length; i++) {
         let point = [];
         point.push(data[i].AUTHID);
-        point.push(data[i].PROPERTY.BETWEENNESS);
-        point.push(data[i].PROPERTY.BROKERAGE);
-        point.push(data[i].PROPERTY.DENSITY);
-        point.push(data[i].PROPERTY.NBETWEENNESS);
-        point.push(data[i].PROPERTY.NBROKERAGE);
-        point.push(data[i].PROPERTY.NETWORKSIZE);
-        point.push(data[i].PROPERTY.TRANSITIVITY);
+        if (checked.BETWEENNESS) {
+            point.push(data[i].PROPERTY.BETWEENNESS);
+        }
+        if (checked.BROKERAGE) {
+            point.push(data[i].PROPERTY.BROKERAGE);
+        }
+        if (checked.DENSITY) {
+            point.push(data[i].PROPERTY.DENSITY);
+        }
+        if (checked.NBETWEENNESS) {
+            point.push(data[i].PROPERTY.NBETWEENNESS);
+        }
+        if (checked.NBROKERAGE) {
+            point.push(data[i].PROPERTY.NBROKERAGE);
+        }
+        if (checked.NETWORKSIZE) {
+            point.push(data[i].PROPERTY.NETWORKSIZE);
+        }
+        if (checked.TRANSITIVITY) {
+            point.push(data[i].PROPERTY.TRANSITIVITY);
+        }
         pointlist.push(point);
     }
     // console.log(pointlist)
@@ -180,9 +189,9 @@ function propertydist(data) {
 /**
  * get scatterplot {x:,y:}
  * @param {number} epsilon
- * @param {num} perplexity
- * @param {num} dim
- * @param {num} iteration
+ * @param {number} perplexity
+ * @param {number} dim
+ * @param {number} iteration
  * @param {object} data
  * @return {object}
  */
@@ -211,7 +220,7 @@ function getplot(epsilon, perplexity, dim, iteration, data) {
  * render big5 plot
  * @param {object} P
  * @param {object} data
- * @param {num} px - pixel
+ * @param {number} px - pixel
  */
 function drawbig5(P, data, px) {
     let max;
@@ -238,15 +247,19 @@ function drawbig5(P, data, px) {
         .domain([min, max])
         .range([15, height - 15]);
 
-    let color = d3.scaleLinear()
-        .domain([0, 5])
-        .range(['white', 'black']);
-
     let tooltip = d3.select('body').append('div')
         .attr('class', 'tooltip')
         .style('opacity', 0);
     // .style("width","200px")
     // .style("height","30px");
+
+    let graph = d3.select('#graph').append('div');
+    swapcolor(data, graph, '#big5', 'defult', '220px', '50px', 'defult');
+    swapcolor(data, graph, '#big5', 'sEXT', '260px', '50px', 'BIG5.sEXT');
+    swapcolor(data, graph, '#big5', 'sNEU', '300px', '50px', 'BIG5.sNEU');
+    swapcolor(data, graph, '#big5', 'sAGR', '340px', '50px', 'BIG5.sAGR');
+    swapcolor(data, graph, '#big5', 'sCON', '380px', '50px', 'BIG5.sCON');
+    swapcolor(data, graph, '#big5', 'sOPN', '420px', '50px', 'BIG5.sOPN');
 
     let svg = d3.select('#graph').append('svg')
         .attr('width', width)
@@ -256,26 +269,26 @@ function drawbig5(P, data, px) {
 
     svg.selectAll('circle').data(data).enter().append('circle')
         .attr('class', 'circle')
-        .attr('cx', function(d) {
+        .attr('cx', function (d) {
             return x(d.BPLOT.x);
         })
-        .attr('cy', function(d) {
+        .attr('cy', function (d) {
             return y(d.BPLOT.y);
         })
         .attr('r', 5)
-        .style('fill', function(d) {
+        .style('fill', function (d) {
             // return color(d.BIG5.sEXT);
             // console.log("rgb("+d.BIG5.sEXT * 51+","+d.BIG5.sCON*51+","+d.BIG5.sAGR*51+")")
-            return 'rgb(' + Math.round(d.BIG5.sEXT * 51) + ',' + Math.round(d.BIG5.sCON * 51) + ',' + Math.round(d.BIG5.sAGR * 51) + ')';
+            return defultcolor('#big5', d);
         })
-        .on('mouseover', function(d) {
+        .on('mouseover', function (d) {
             d3.select('#property').selectAll('circle')
-                .style('fill', function(s) {
+                .style('fill', function (s) {
                     // console.log(d.AUTHID)
                     if (d.AUTHID === s.AUTHID) {
-                        return 'white';
+                        return 'black';
                     } else {
-                        return 'rgb(' + Math.round(s.PROPERTY.NBETWEENNESS) + ',' + Math.round(s.PROPERTY.NETWORKSIZE * 0.1) + ',' + Math.round(s.PROPERTY.TRANSITIVITY * 500) + ')';
+                        return defultcolor('#property', s);
                     }
                 });
             tooltip.transition()
@@ -285,24 +298,25 @@ function drawbig5(P, data, px) {
                 .style('left', (d3.event.pageX + 5) + 'px')
                 .style('top', (d3.event.pageY - 30) + 'px');
         })
-        .on('mouseout', function(d) {
+        .on('mouseout', function (d) {
             tooltip.transition()
                 .duration(500)
                 .style('opacity', 0);
         })
-        .on('click', function(d) {
+        .on('click', function (d) {
 
         })
-        .on('click', function(d) {
+        .on('click', function (d) {
             status(d);
         });
+    // console.log();
 }
 
 /**
  * render property plot
  * @param {object} P
  * @param {object} data
- * @param {num} px - pixel
+ * @param {number} px - pixel
  */
 function drawproperty(P, data, px) {
     let max;
@@ -329,15 +343,21 @@ function drawproperty(P, data, px) {
         .domain([min, max])
         .range([15, height - 15]);
 
-    let color = d3.scaleLinear()
-        .domain([0, 5])
-        .range(['white', 'black']);
-
     let tooltip = d3.select('body').append('div')
         .attr('class', 'tooltip')
         .style('opacity', 0);
     // .style("width","200px")
     // .style("height","30px");
+
+    let graph = d3.select('#graph').append('div');
+    swapcolor(data, graph, '#property', 'defult', '460px', '50px', 'defult');
+    swapcolor(data, graph, '#property', 'BETWEENNESS', '500px', '50px', 'PROPERTY.BETWEENNESS');
+    swapcolor(data, graph, '#property', 'BROKERAGE', '540px', '50px', 'PROPERTY.BROKERAGE');
+    swapcolor(data, graph, '#property', 'DENSITY', '580px', '50px', 'PROPERTY.DENSITY');
+    swapcolor(data, graph, '#property', 'NBETWEENNESS', '620px', '50px', 'PROPERTY.NBETWEENNESS');
+    swapcolor(data, graph, '#property', 'NBROKERAGE', '660px', '50px', 'PROPERTY.NBROKERAGE');
+    swapcolor(data, graph, '#property', 'NETWORKSIZE', '700px', '50px', 'PROPERTY.NETWORKSIZE');
+    swapcolor(data, graph, '#property', 'TRANSITIVITY', '740px', '50px', 'PROPERTY.TRANSITIVITY');
 
     let svg = d3.select('#graph').append('svg')
         .attr('width', width)
@@ -347,26 +367,26 @@ function drawproperty(P, data, px) {
 
     svg.selectAll('circle').data(data).enter().append('circle')
         .attr('class', 'circle')
-        .attr('cx', function(d) {
+        .attr('cx', function (d) {
             return x(d.PPLOT.x);
         })
-        .attr('cy', function(d) {
+        .attr('cy', function (d) {
             return y(d.PPLOT.y);
         })
         .attr('r', 5)
-        .style('fill', function(d) {
+        .style('fill', function (d) {
             // return color(d.BIG5.sEXT);
             // console.log("rgb("+d.BIG5.sEXT * 51+","+d.BIG5.sCON*51+","+d.BIG5.sAGR*51+")")
-            return 'rgb(' + Math.round(d.PROPERTY.NBETWEENNESS) + ',' + Math.round(d.PROPERTY.NETWORKSIZE * 0.1) + ',' + Math.round(d.PROPERTY.TRANSITIVITY * 500) + ')';
+            return defultcolor('#property', d);
         })
-        .on('mouseover', function(d) {
+        .on('mouseover', function (d) {
             d3.select('#big5').selectAll('circle')
-                .style('fill', function(s) {
+                .style('fill', function (s) {
                     // console.log(d.AUTHID)
                     if (d.AUTHID === s.AUTHID) {
-                        return 'white';
+                        return 'black';
                     } else {
-                        return 'rgb(' + Math.round(s.BIG5.sEXT * 51) + ',' + Math.round(s.BIG5.sCON * 51) + ',' + Math.round(s.BIG5.sAGR * 51) + ')';
+                        return defultcolor('#big5', s);
                     }
                 });
             tooltip.transition()
@@ -376,12 +396,12 @@ function drawproperty(P, data, px) {
                 .style('left', (d3.event.pageX + 5) + 'px')
                 .style('top', (d3.event.pageY - 30) + 'px');
         })
-        .on('mouseout', function(d) {
+        .on('mouseout', function (d) {
             tooltip.transition()
                 .duration(500)
                 .style('opacity', 0);
         })
-        .on('click', function(d) {
+        .on('click', function (d) {
             status(d);
         });
 }
@@ -406,12 +426,20 @@ function status(point) {
 
 /**
  * form checked
+ * @param {string} query - getelementsbyname
+ * @return {object} - array
  */
-function formchecked() {
+function formchecked(query) {
     // var checkedValue = document.querySelector('Big5:checked').value;
-    let value = document.getElementsByName('Big5').value;
-    console.log(document.getElementsByName('Big5')[0].checked);
+    let checked = {};
+    let form = document.getElementsByName(query);
+    for (let i = 0; i < form.length; i++) {
+        let id = form[i].id;
+        checked[id] = form[i].checked;
+    }
+    console.log(checked);
     // return value;
+    return checked;
 }
 
 /**
@@ -422,7 +450,7 @@ function submit(data) {
     // Y is an array of 2-D points that you can plot
     let Y = getplot(10, 15, 2, 100, big5dist(data));
     let Z = getplot(10, 15, 2, 100, propertydist(data));
-    console.log(Y);
+    // console.log(Y);
     for (let i = 0; i < data.length; i++) {
         data[i]['BPLOT'] = {
             x: Y[i][0],
@@ -435,7 +463,125 @@ function submit(data) {
             y: Z[i][1],
         };
     }
-    console.log(data);
+    // console.log(data);
     drawbig5(Y, data, 500);
     drawproperty(Z, data, 500);
+}
+
+/**
+ * normalize a dist
+ * @param {object} dists - dist array
+ * @return {object} - array
+ */
+function normalize(dists) {
+    let max = MatMax(dists);
+    // console.log(max)
+    let n = dists.length;
+    for (let i = 0; i < n; i++) {
+        for (let j = 0; j < n; j++) {
+            dists[i][j] = dists[i][j] / max;
+        }
+    }
+    return dists;
+}
+
+/**
+ * swap color
+ * @param {object} data - ref data
+ * @param {object} select - element
+ * @param {string} id
+ * @param {string} value
+ * @param {string} top
+ * @param {string} left
+ * @param {string} attribute
+ */
+function swapcolor(data, select, id, value, top, left, attribute) {
+    // console.log(select.select(id).selectAll('circle'));
+    select.append('input')
+        .attr('type', 'button')
+        .attr('class', 'btn btn-primary btn-xs')
+        .attr('value', value)
+        // .style('position', 'absolute')
+        // .style('top', top)
+        // .style('left', left)
+        .on('click', function () {
+            d3.select(id).selectAll('circle')
+                .style('fill', function (d) {
+                    if (attribute === 'defult') {
+                        return defultcolor(id, d);
+                    } else {
+                        let domain = attrdomain(data, attribute);
+                        return colorscale(domain, setDescendantProp(d, attribute));
+                    }
+                });
+        });
+}
+
+/**
+ * setDescendantProp
+ * @param {object} obj
+ * @param {string} desc
+ * @return {any} - obj
+ */
+function setDescendantProp(obj, desc) {
+    let arr = desc.split('.');
+    while (arr.length > 1) {
+        obj = obj[arr.shift()];
+    }
+    return obj[arr[0]];
+}
+
+/**
+ * get array domain
+ * @param {object} data
+ * @param {string} attribute
+ * @return {object}
+ */
+function attrdomain(data, attribute) {
+    let array = [];
+    for (let i = 0; i < data.length; i++) {
+        array.push(setDescendantProp(data[i], attribute));
+    }
+    let min;
+    let max;
+    for (let i = 0; i < array.length; i++) {
+        if (Number(array[i]) < min || min === undefined) {
+            min = Number(array[i]);
+        }
+        if (Number(array[i]) > max || max === undefined) {
+            max = Number(array[i]);
+        }
+    }
+    return {
+        'min': min,
+        'max': max,
+    };
+}
+
+/**
+ * color scale
+ * @param {object} domain
+ * @param {number} value
+ * @return {number}
+ */
+function colorscale(domain, value) {
+    let color = d3.scaleLinear()
+        .domain([domain.min, domain.max])
+        .range(['lightgrey', 'black']);
+    return color(value);
+}
+
+/**
+ * set defultcolor
+ * @param {string} id
+ * @param {object} d
+ * @return {color}
+ */
+function defultcolor(id, d) {
+    if (id == '#property') {
+        return 'rgb(' + Math.round(d.PROPERTY.NBETWEENNESS) + ',' + Math.round(d.PROPERTY.NETWORKSIZE * 0.1) + ',' + Math.round(d.PROPERTY.TRANSITIVITY * 500) + ')';
+    }
+    if (id == '#big5') {
+        return 'rgb(' + Math.round(d.BIG5.sEXT * 51) + ',' + Math.round(d.BIG5.sCON * 51) + ',' + Math.round(d.BIG5.sAGR * 51) + ')';
+    }
 }

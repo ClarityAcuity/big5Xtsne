@@ -4,6 +4,8 @@
     "rules": {
         "semi": ["error", "always"],
         "max-len": "off",
-        "new-cap": "off"
+        "new-cap": "off",
+        "space-before-function-paren": "off",
+        "eol-last": "off"
     }
 }
