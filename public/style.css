@@ -29,6 +29,14 @@ div.tooltip {
     pointer-events: none;
 }
 
-tr.th {
+th{
     font-family: "Times New Roman", Times, serif;
+    text-align: center;
+    font: 15px sans-serif;
+}
+
+td{
+    font-family: "Times New Roman", Times, serif;
+    text-align: left;
+    font: 15px sans-serif;
 }
