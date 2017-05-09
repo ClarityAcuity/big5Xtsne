@@ -391,15 +391,22 @@ function drawproperty(P, data, px) {
  * @param {object} point - user point object
  */
 function status(point) {
-    let table = '<table><tbody>';
+    let table = '<table style="border:3px #23415a solid;" cellpadding="13" border="1"><tbody>';
+    table += '<tr>'
+             + '<th width="6%">#</th>'
+             + '<th width="90%">Status</th>'
+             + '</tr>';
     for (let i = 0; i < point.STATUS.length; i++) {
-        let s = '<tr>' + '<th>' + point.STATUS[i] + '</th>' + '</tr>';
+        let s = '<tr>'
+                + '<th>' + (i+1) + '</th>'
+                + '<td>' + point.STATUS[i] + '</td>'
+                + '</tr>';
         table += s;
     }
     table += '</tbody></table>';
     let div = document.getElementById('table');
     console.log(div);
-    let index = div.innerHTML.indexOf('<table>');
+    let index = div.innerHTML.indexOf('<table');
     div.innerHTML = div.innerHTML.slice(0, index);
     div.innerHTML += table;
 }
