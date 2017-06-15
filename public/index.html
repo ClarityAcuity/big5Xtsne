@@ -15,6 +15,16 @@
     <div>
         <form>
             <fieldset>
+                <legend>Set t-SNE Parameters</legend>
+                <label for="x">epsilon: </label>
+                <input name="epsilon" id="epsilon" type="number" placeholder="epsilon" value="10"></input>
+                <label for="x">perplexity: </label>
+                <input name="perplexity" id="perplexity" type="number" placeholder="perplexity" value="50"></input>
+                <!--<input name="dim" id="dim" type="number" placeholder="dim" value="2">dimention</input>-->
+                <label for="x">iteration: </label>
+                <input name="iteration" id="iteration" type="number" placeholder="iteration" value="100"></input>
+            </fieldset>
+            <fieldset>
                 <legend>Choose Big5 Attributes</legend>
                 <label for="x">sEXT</label>
                 <input name="Big5" id="sEXT" type="checkbox" value="sEXT" checked></input>
@@ -44,10 +54,13 @@
                 <label for="y">TRANSITIVITY</label>
                 <input name="Property" id="TRANSITIVITY" type="checkbox" value="TRANSITIVITY" checked></input>
             </fieldset>
+            <label for="z">Normalize</label>
+            <input name="nomalize" id="nomalize" type="checkbox" value="normalize" checked></input>
             <input name="submit" id="submit" type="button" value="Submit"></input>
         </form>
     </div>
     <div id="graph"></div>
+    <div class="radarChart"></div>
     <div id="table"></div>
 </body>
 
