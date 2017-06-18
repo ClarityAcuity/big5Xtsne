@@ -164,10 +164,10 @@ function normalize(pointlist) {
 /**
  * get big5dist dists
  * @param {object} data - source data object
- * @param {bool} normalize - normalize or not
+ * @param {bool} normal - normalize or not
  * @return {object} - array
  */
-function big5dist(data, normalize) {
+function big5dist(data, normal) {
     let checked = formchecked('Big5');
     let pointlist = [];
     for (let i = 0; i < data.length; i++) {
@@ -191,7 +191,7 @@ function big5dist(data, normalize) {
         pointlist.push(point);
     }
     // console.log(pointlist)
-    if (normalize) {
+    if (normal) {
         pointlist = normalize(pointlist);
     }
     let dists = initMat(pointlist.length);
@@ -209,10 +209,10 @@ function big5dist(data, normalize) {
 /**
  * get network properties dist
  * @param {object} data - source data object
- * @param {bool} normalize - normalize or not
+ * @param {bool} normal - normalize or not
  * @return {object}
  */
-function propertydist(data, normalize) {
+function propertydist(data, normal) {
     let checked = formchecked('Property');
     let pointlist = [];
     for (let i = 0; i < data.length; i++) {
@@ -242,7 +242,7 @@ function propertydist(data, normalize) {
         pointlist.push(point);
     }
     // console.log(pointlist)
-    if (normalize) {
+    if (normal) {
         pointlist = normalize(pointlist);
     }
     let dists = initMat(pointlist.length);
@@ -335,10 +335,17 @@ function drawbig5(P, data, px) {
     let svg = d3.select('#graph').append('svg')
         .attr('width', width)
         .attr('height', height)
-        .append('g')
+        .style('fill', 'none')
+        .style('pointer-events', 'all')
+        .call(d3.zoom()
+            .scaleExtent([1 / 2, 4])
+            .on('zoom', function () {
+                g.attr('transform', d3.event.transform);
+            }));
+    let g = svg.append('g')
         .attr('id', 'big5');
 
-    svg.selectAll('circle').data(data).enter().append('circle')
+    g.selectAll('circle').data(data).enter().append('circle')
         .attr('class', 'circle')
         .attr('cx', function (d) {
             return x(d.BPLOT.x);
@@ -458,10 +465,17 @@ function drawproperty(P, data, px) {
     let svg = d3.select('#graph').append('svg')
         .attr('width', width)
         .attr('height', height)
-        .append('g')
+        .style('fill', 'none')
+        .style('pointer-events', 'all')
+        .call(d3.zoom()
+            .scaleExtent([1 / 2, 4])
+            .on('zoom', function () {
+                g.attr('transform', d3.event.transform);
+            }));
+    let g = svg.append('g')
         .attr('id', 'property');
 
-    svg.selectAll('circle').data(data).enter().append('circle')
+    g.selectAll('circle').data(data).enter().append('circle')
         .attr('class', 'circle')
         .attr('cx', function (d) {
             return x(d.PPLOT.x);
@@ -567,13 +581,10 @@ function submit(data) {
     let dim = 2;
     let iteration = getparam('iteration');
     let normalized = document.getElementsByName('normalize');
-    if (normalized.checked) {
-        let normalize = true;
-    } else {
-        let normalize = false;
-    }
-    let Y = getplot(epsilon, perplexity, dim, iteration, big5dist(data, normalize));
-    let Z = getplot(epsilon, perplexity, dim, iteration, propertydist(data, normalize));
+    let normal = normalized[0].checked;
+    // console.log(normalized[0].checked);
+    let Y = getplot(epsilon, perplexity, dim, iteration, big5dist(data, normal));
+    let Z = getplot(epsilon, perplexity, dim, iteration, propertydist(data, normal));
     // console.log(Y);
     for (let i = 0; i < data.length; i++) {
         data[i]['BPLOT'] = {
@@ -691,6 +702,17 @@ function defultcolor(id, d) {
     if (id == '#big5') {
         return 'rgb(' + Math.round(d.BIG5.sEXT * 51) + ',' + Math.round(d.BIG5.sCON * 51) + ',' + Math.round(d.BIG5.sAGR * 51) + ')';
     }
+}
+
+/**
+ * creation brush
+ * @param {number} w
+ * @param {number} h
+ */
+function brush(w, h) {
+    let brush = d3.brush()
+        .extent([0, 0], [w, h])
+        .on('brush end', brushed);
 }
 
 /**
