@@ -324,6 +324,122 @@ function drawbig5(P, data, px) {
     // .style("width","200px")
     // .style("height","30px");
 
+    let zoom = d3.zoom()
+        .scaleExtent([1 / 2, 4])
+        .on('zoom', function () {
+            g.attr('transform', d3.event.transform);
+        });
+
+    let brush = d3.brush()
+        .extent([
+            [0, 0],
+            [width, height],
+        ])
+        .on('brush end', updateBrush);
+
+    // generate a quadtree for faster lookups for brushing
+    const quadtree = d3.quadtree()
+        .x(d => x(d.BPLOT.x))
+        .y(d => y(d.BPLOT.y))
+        .addAll(data);
+
+    // callback when the brush updates / ends
+    function updateBrush() {
+        // The following two functions taken from vis-utils: https://github.com/pbeshai/vis-utils
+        const X = 0;
+        const Y = 1;
+        const TOP_LEFT = 0;
+        const BOTTOM_RIGHT = 1;
+        const {
+            selection
+        } = d3.event;
+        // console.log(selection);
+        // if we have no selection, just reset the brush highlight to no nodes
+        if (!selection) {
+            highlightBrushed([]);
+            highlightBrushed(brushedNodes);
+            return;
+        }
+
+        // begin an array to collect the brushed nodes
+        const brushedNodes = [];
+
+        // traverse the quad tree, skipping branches where we do not overlap
+        // with the brushed selection box
+        quadtree.visit((node, x1, y1, x2, y2) => {
+            // check that quadtree node intersects
+            const overlaps = rectIntersects(selection, [
+                [x1, y1],
+                [x2, y2],
+            ]);
+
+            // skip if it doesn't overlap the brush
+            if (!overlaps) {
+                return true;
+            }
+
+            // if this is a leaf node (node.length is falsy), verify it is within the brush
+            // we have to do this since an overlapping quadtree box does not guarantee
+            // that all the points within that box are covered by the brush.
+            if (!node.length) {
+                const d = node.data;
+                const dx = x(d.BPLOT.x);
+                const dy = y(d.BPLOT.y);
+                if (rectContains(selection, [dx, dy])) {
+                    brushedNodes.push(d);
+                }
+            }
+
+            // return false so that we traverse into branch (only useful for non-leaf nodes)
+            return false;
+        });
+
+        /**
+         * Determines if two rectangles overlap by looking at two pairs of
+         * points [[r1x1, r1y1], [r1x2, r1y2]] for rectangle 1 and similarly
+         * for rectangle2.
+         */
+        function rectIntersects(rect1, rect2) {
+            return (rect1[TOP_LEFT][X] <= rect2[BOTTOM_RIGHT][X] &&
+                rect2[TOP_LEFT][X] <= rect1[BOTTOM_RIGHT][X] &&
+                rect1[TOP_LEFT][Y] <= rect2[BOTTOM_RIGHT][Y] &&
+                rect2[TOP_LEFT][Y] <= rect1[BOTTOM_RIGHT][Y]);
+        }
+
+        /**
+         * Determines if a point is inside a rectangle. The rectangle is
+         * defined by two points [[rx1, ry1], [rx2, ry2]]
+         */
+        function rectContains(rect, point) {
+            return rect[TOP_LEFT][X] <= point[X] && point[X] <= rect[BOTTOM_RIGHT][X] &&
+                rect[TOP_LEFT][Y] <= point[Y] && point[Y] <= rect[BOTTOM_RIGHT][Y];
+        }
+
+        /**
+         * 
+         * @param {*} brushedNodes 
+         */
+        function highlightBrushed(brushedNodes) {
+            const brushedCircles = g.append('g').attr('class', 'circles-brushed');
+            // overlap colored circles to indicate the highlighted ones in the chart
+            const circles = brushedCircles.selectAll('circle').data(brushedNodes, d => d.id);
+            const brushedColor = 'tomato';
+            circles.enter()
+                .append('circle')
+                .classed('data-point brushed', true)
+                .attr('r', 5)
+                .attr('cx', d => x(d.BPLOT.x))
+                .attr('cy', d => y(d.BPLOT.y))
+                .attr('fill', brushedColor);
+
+            circles.exit()
+                .remove();
+        }
+        // update the highlighted brushed nodes
+        console.log(brushedNodes);
+        highlightBrushed(brushedNodes);
+    }
+
     let graph = d3.select('#graph').append('div');
     swapcolor(data, graph, '#big5', 'defult', '220px', '50px', 'defult');
     swapcolor(data, graph, '#big5', 'sEXT', '260px', '50px', 'BIG5.sEXT');
@@ -337,13 +453,21 @@ function drawbig5(P, data, px) {
         .attr('height', height)
         .style('fill', 'none')
         .style('pointer-events', 'all')
-        .call(d3.zoom()
-            .scaleExtent([1 / 2, 4])
-            .on('zoom', function () {
-                g.attr('transform', d3.event.transform);
-            }));
+        .call(zoom);
+
     let g = svg.append('g')
         .attr('id', 'big5');
+
+    let gBrush = g.append('g')
+        .attr('class', 'brush')
+        .call(brush);
+
+    // update the styling of the select box (typically done in CSS)
+    gBrush.select('.selection')
+        .style('stroke', 'skyblue')
+        .style('stroke-opacity', 0.4)
+        .style('fill', 'skyblue')
+        .style('fill-opacity', 0.1);
 
     g.selectAll('circle').data(data).enter().append('circle')
         .attr('class', 'circle')
