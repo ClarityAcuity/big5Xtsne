@@ -328,6 +328,9 @@ function drawbig5(P, data, px) {
         .scaleExtent([1 / 2, 4])
         .on('zoom', function () {
             g.attr('transform', d3.event.transform);
+            let k = this.__zoom.k;
+            g.selectAll('.circle').attr('r', 5 / k)
+                .attr('stroke-width', 1 / k);
         });
 
     let brush = d3.brush()
@@ -339,19 +342,91 @@ function drawbig5(P, data, px) {
 
     // generate a quadtree for faster lookups for brushing
     const quadtree = d3.quadtree()
-        .x(d => x(d.BPLOT.x))
-        .y(d => y(d.BPLOT.y))
+        .x((d) => x(d.BPLOT.x))
+        .y((d) => y(d.BPLOT.y))
         .addAll(data);
 
-    // callback when the brush updates / ends
+    /**
+     * callback when the brush updates / ends
+     */
     function updateBrush() {
         // The following two functions taken from vis-utils: https://github.com/pbeshai/vis-utils
         const X = 0;
         const Y = 1;
         const TOP_LEFT = 0;
         const BOTTOM_RIGHT = 1;
+        /**
+         * Determines if two rectangles overlap by looking at two pairs of points [[r1x1, r1y1], [r1x2, r1y2]]
+         * for rectangle 1 and similarly for rectangle2.
+         * @param {object} rect1
+         * @param {object} rect2
+         * @return {bool}
+         */
+        function rectIntersects(rect1, rect2) {
+            return (rect1[TOP_LEFT][X] <= rect2[BOTTOM_RIGHT][X] &&
+                rect2[TOP_LEFT][X] <= rect1[BOTTOM_RIGHT][X] &&
+                rect1[TOP_LEFT][Y] <= rect2[BOTTOM_RIGHT][Y] &&
+                rect2[TOP_LEFT][Y] <= rect1[BOTTOM_RIGHT][Y]);
+        }
+
+        /**
+         * Determines if a point is inside a rectangle. The rectangle is
+         * defined by two points [[rx1, ry1], [rx2, ry2]]
+         * @param {object} rect
+         * @param {object} point
+         * @return {bool}
+         */
+        function rectContains(rect, point) {
+            return rect[TOP_LEFT][X] <= point[X] && point[X] <= rect[BOTTOM_RIGHT][X] &&
+                rect[TOP_LEFT][Y] <= point[Y] && point[Y] <= rect[BOTTOM_RIGHT][Y];
+        }
+
+        /**
+         * highlightBrushed
+         * @param {object} brushedNodes - brush selection data
+         */
+        function highlightBrushed(brushedNodes) {
+            d3.selectAll('.circles-brushed').remove();
+            // const brushedCircles = g.append('g').attr('class', 'circles-brushed');
+            // overlap colored circles to indicate the highlighted ones in the chart
+            // really slow
+            /*
+            let circle = g.selectAll('circle')._groups[0];
+            for (let i = 0; i < circle.length; i++) {
+                for (let j = 0; j < brushedNodes.length; j++) {
+                    console.log(circle[i]['__data__']);
+                    if (circle[i]['__data__'] == brushedNodes[j]) {
+                        d3.select(circle[i]).style('fill', 'red');
+                    }
+                }
+            }*/
+
+            const circles = g.selectAll('circle'); // .data(brushedNodes);
+            let t = brushedNodes.length;
+            const color = d3.interpolateRdBu;
+            circles.filter(function (d, i) {
+                let find = false;
+                let index = 0;
+                for (let i = 0; i < t; i++) {
+                    if (d === brushedNodes[i]) {
+                        find = true;
+                        index = i;
+                        i = brushedNodes.length;
+                    }
+                }
+                if (find) {
+                    d3.select(this).style('fill', color(index/t))
+                        .style('stroke', 'black');
+                } else {
+                    d3.select(this).style('fill', defultcolor('#big5', d))
+                        .style('stroke', 'none');
+                }
+                return find;
+            });
+        }
+
         const {
-            selection
+            selection,
         } = d3.event;
         // console.log(selection);
         // if we have no selection, just reset the brush highlight to no nodes
@@ -394,50 +469,30 @@ function drawbig5(P, data, px) {
             return false;
         });
 
-        /**
-         * Determines if two rectangles overlap by looking at two pairs of
-         * points [[r1x1, r1y1], [r1x2, r1y2]] for rectangle 1 and similarly
-         * for rectangle2.
-         */
-        function rectIntersects(rect1, rect2) {
-            return (rect1[TOP_LEFT][X] <= rect2[BOTTOM_RIGHT][X] &&
-                rect2[TOP_LEFT][X] <= rect1[BOTTOM_RIGHT][X] &&
-                rect1[TOP_LEFT][Y] <= rect2[BOTTOM_RIGHT][Y] &&
-                rect2[TOP_LEFT][Y] <= rect1[BOTTOM_RIGHT][Y]);
-        }
-
-        /**
-         * Determines if a point is inside a rectangle. The rectangle is
-         * defined by two points [[rx1, ry1], [rx2, ry2]]
-         */
-        function rectContains(rect, point) {
-            return rect[TOP_LEFT][X] <= point[X] && point[X] <= rect[BOTTOM_RIGHT][X] &&
-                rect[TOP_LEFT][Y] <= point[Y] && point[Y] <= rect[BOTTOM_RIGHT][Y];
-        }
-
-        /**
-         * 
-         * @param {*} brushedNodes 
-         */
-        function highlightBrushed(brushedNodes) {
-            const brushedCircles = g.append('g').attr('class', 'circles-brushed');
-            // overlap colored circles to indicate the highlighted ones in the chart
-            const circles = brushedCircles.selectAll('circle').data(brushedNodes, d => d.id);
-            const brushedColor = 'tomato';
-            circles.enter()
-                .append('circle')
-                .classed('data-point brushed', true)
-                .attr('r', 5)
-                .attr('cx', d => x(d.BPLOT.x))
-                .attr('cy', d => y(d.BPLOT.y))
-                .attr('fill', brushedColor);
-
-            circles.exit()
-                .remove();
-        }
         // update the highlighted brushed nodes
-        console.log(brushedNodes);
         highlightBrushed(brushedNodes);
+
+        let margin = {
+            top: 100,
+            right: 100,
+            bottom: 100,
+            left: 100,
+        };
+        let width = Math.min(700, window.innerWidth - 10) - margin.left - margin.right;
+        let height = Math.min(width, window.innerHeight - margin.top - margin.bottom - 20);
+        let color = d3.scaleOrdinal(['#EDC951', '#CC333F', '#00A0B0']);
+
+        let radarChartOptions = {
+            'w': width,
+            'h': height,
+            'margin': margin,
+            'maxValue': 0.5,
+            'levels': 5,
+            'roundStrokes': true,
+            'color': color,
+        };
+        // Call function to draw the Radar chart
+        radarchart('.radarChart', brushedNodes, radarChartOptions);
     }
 
     let graph = d3.select('#graph').append('div');
@@ -467,16 +522,12 @@ function drawbig5(P, data, px) {
         .style('stroke', 'skyblue')
         .style('stroke-opacity', 0.4)
         .style('fill', 'skyblue')
-        .style('fill-opacity', 0.1);
+        .style('fill-opacity', 1);
 
-    g.selectAll('circle').data(data).enter().append('circle')
+    circles = g.append('g').attr('class', 'circle').selectAll('circle').data(data).enter().append('circle')
         .attr('class', 'circle')
-        .attr('cx', function (d) {
-            return x(d.BPLOT.x);
-        })
-        .attr('cy', function (d) {
-            return y(d.BPLOT.y);
-        })
+        .attr('cx', (d) => x(d.BPLOT.x))
+        .attr('cy', (d) => y(d.BPLOT.y))
         .attr('r', 5)
         .style('fill', function (d) {
             // return color(d.BIG5.sEXT);
@@ -507,34 +558,6 @@ function drawbig5(P, data, px) {
         })
         .on('click', function (d) {
             status(d);
-            let margin = {
-                top: 100,
-                right: 100,
-                bottom: 100,
-                left: 100,
-            };
-            let width = Math.min(700, window.innerWidth - 10) - margin.left - margin.right;
-            let height = Math.min(width, window.innerHeight - margin.top - margin.bottom - 20);
-            let color = d3.scaleOrdinal(['#EDC951', '#CC333F', '#00A0B0']);
-
-            let radarChartOptions = {
-                'w': width,
-                'h': height,
-                'margin': margin,
-                'maxValue': 0.5,
-                'levels': 5,
-                'roundStrokes': true,
-                'color': color,
-            };
-            // Call function to draw the Radar chart
-            let allAxis = ['sEXT', 'sNEU', 'sAGR', 'sCON', 'sOPN'];
-            let indata = [];
-            for (let i = 0; i < allAxis.length; i++) {
-                let str = allAxis[i];
-                indata.push(Number(d.BIG5[str]));
-            }
-            console.log(indata);
-            radarchart('.radarChart', indata, radarChartOptions);
         });
     // console.log();
 }
@@ -599,7 +622,7 @@ function drawproperty(P, data, px) {
     let g = svg.append('g')
         .attr('id', 'property');
 
-    g.selectAll('circle').data(data).enter().append('circle')
+    g.append('g').attr('class', 'circle').selectAll('circle').data(data).enter().append('circle')
         .attr('class', 'circle')
         .attr('cx', function (d) {
             return x(d.PPLOT.x);
@@ -722,7 +745,7 @@ function submit(data) {
             y: Z[i][1],
         };
     }
-    // console.log(data);
+    console.log(data);
     drawbig5(Y, data, 500);
     drawproperty(Z, data, 500);
 }
@@ -829,17 +852,6 @@ function defultcolor(id, d) {
 }
 
 /**
- * creation brush
- * @param {number} w
- * @param {number} h
- */
-function brush(w, h) {
-    let brush = d3.brush()
-        .extent([0, 0], [w, h])
-        .on('brush end', brushed);
-}
-
-/**
  * make radar chart
  * @param {string} id - select id
  * @param {object} data - input data
@@ -859,12 +871,12 @@ function radarchart(id, data, option) {
         maxValue: 0, // What is the value that the biggest circle will represent
         labelFactor: 1.25, // How much farther than the radius of the outer circle should the labels be placed
         wrapWidth: 60, // The number of pixels after which a label needs to be given a new line
-        opacityArea: 0.35, // The opacity of the area of the blob
+        opacityArea: 0, // The opacity of the area of the blob
         dotRadius: 4, // The size of the colored circles of each blog
         opacityCircles: 0.1, // The opacity of the circles of each blob
         strokeWidth: 2, // The width of the stroke around each blob
         roundStrokes: true, // If true the area and stroke will follow a round path (cardinal-closed)
-        color: d3.schemeCategory10, // Color function
+        color: d3.interpolateRdBu, // Color function
     };
     // console.log(cfg.color);
     // Put all of the options into a letiable called cfg
@@ -920,6 +932,17 @@ function radarchart(id, data, option) {
     let feMerge = filter.append('feMerge');
     let feMergeNode1 = feMerge.append('feMergeNode').attr('in', 'coloredBlur');
     let feMergeNode2 = feMerge.append('feMergeNode').attr('in', 'SourceGraphic');
+
+    let indata = [];
+    for (let i = 0; i < data.length; i++) {
+        let temp = [];
+        for (let j = 0; j < allAxis.length; j++) {
+            let str = allAxis[j];
+            temp.push(Number(data[i].BIG5[str]));
+        }
+        indata.push(temp);
+    }
+    // console.log(indata);
 
     // ///////////////////////////////////////////////////////
     // ///////////// Draw the Circular grid //////////////////
@@ -1006,8 +1029,7 @@ function radarchart(id, data, option) {
     // The radial line function
     let radarLine = d3.radialLine()
         .curve(d3.curveBasisClosed)
-        .radius(function (d) {
-            console.log(d);
+        .radius(function (d, i) {
             return rScale(d);
         })
         .angle(function (d, i) {
@@ -1020,19 +1042,17 @@ function radarchart(id, data, option) {
 
     // Create a wrapper for the blobs
     let blobWrapper = g.selectAll('.radarWrapper')
-        .data(data)
+        .data(indata)
         .enter().append('g')
         .attr('class', 'radarWrapper');
 
-    // console.log(blobWrapper);
     // Append the backgrounds
     blobWrapper
         .append('path')
         .attr('class', 'radarArea')
-        .attr('d', radarLine(data))
+        .attr('d', (d) => radarLine(d))
         .style('fill', function (d, i) {
-            console.log('i= ' + i);
-            return cfg.color[i];
+            return cfg.color(i/indata.length);
         })
         .style('fill-opacity', cfg.opacityArea)
         .on('mouseover', function (d, i) {
@@ -1055,30 +1075,31 @@ function radarchart(id, data, option) {
     // Create the outlines
     blobWrapper.append('path')
         .attr('class', 'radarStroke')
-        .attr('d', radarLine(data))
+        .attr('d', (d) => radarLine(d))
         .style('stroke-width', cfg.strokeWidth + 'px')
         .style('stroke', function (d, i) {
-            console.log('i= ' + i);
-            return cfg.color[i];
+            return cfg.color(i/indata.length);
         })
         .style('fill', 'none')
         .style('filter', 'url(#glow)');
 
     // Append the circles
     blobWrapper.selectAll('.radarCircle')
-        .data(data)
+        .data(function (d, i) {
+            let key = i;
+            d3.select(this).style('fill', function (d, i) {
+                return cfg.color(key/indata.length);
+            });
+            return d;
+        })
         .enter().append('circle')
         .attr('class', 'radarCircle')
-        .attr('r', cfg.dotRadius)
+        .attr('r', cfg.dotRadius * 0.75)
         .attr('cx', function (d, i) {
             return rScale(d) * Math.cos(angleSlice * i - Math.PI / 2);
         })
         .attr('cy', function (d, i) {
             return rScale(d) * Math.sin(angleSlice * i - Math.PI / 2);
-        })
-        .style('fill', function (d, i, j) {
-            console.log('j= ' + j);
-            return cfg.color[j];
         })
         .style('fill-opacity', 0.8);
 
@@ -1088,13 +1109,15 @@ function radarchart(id, data, option) {
 
     // Wrapper for the invisible circles on top
     let blobCircleWrapper = g.selectAll('.radarCircleWrapper')
-        .data(data)
+        .data(indata)
         .enter().append('g')
         .attr('class', 'radarCircleWrapper');
 
     // Append a set of invisible circles on top for the mouseover pop-up
     blobCircleWrapper.selectAll('.radarInvisibleCircle')
-        .data(data)
+        .data(function (d, i) {
+            return d;
+        })
         .enter().append('circle')
         .attr('class', 'radarInvisibleCircle')
         .attr('r', cfg.dotRadius * 1.5)
