@@ -298,10 +298,10 @@ function drawbig5(P, data, px) {
     let min;
     for (let i = 0; i < P.length; i++) {
         for (let j = 0; j < 2; j++) {
-            if (P[i][j] > max || max == undefined) {
+            if (P[i][j] > max || max === undefined) {
                 max = P[i][j];
             }
-            if (P[i][j] < min || min == undefined) {
+            if (P[i][j] < min || min === undefined) {
                 min = P[i][j];
             }
         }
@@ -395,34 +395,35 @@ function drawbig5(P, data, px) {
             for (let i = 0; i < circle.length; i++) {
                 for (let j = 0; j < brushedNodes.length; j++) {
                     console.log(circle[i]['__data__']);
-                    if (circle[i]['__data__'] == brushedNodes[j]) {
+                    if (circle[i]['__data__'] === brushedNodes[j]) {
                         d3.select(circle[i]).style('fill', 'red');
                     }
                 }
             }*/
-
-            const circles = g.selectAll('circle'); // .data(brushedNodes);
-            let t = brushedNodes.length;
-            const color = d3.interpolateRdBu;
-            circles.filter(function (d, i) {
-                let find = false;
-                let index = 0;
-                for (let i = 0; i < t; i++) {
-                    if (d === brushedNodes[i]) {
-                        find = true;
-                        index = i;
-                        i = brushedNodes.length;
+            if (brushedNodes.lenght !== 0) {
+                const circles = g.selectAll('circle'); // .data(brushedNodes);
+                let t = brushedNodes.length;
+                const color = d3.interpolateRdBu;
+                circles.filter(function (d, i) {
+                    let find = false;
+                    let index = 0;
+                    for (let i = 0; i < t; i++) {
+                        if (d === brushedNodes[i]) {
+                            find = true;
+                            index = i;
+                            i = brushedNodes.length;
+                        }
                     }
-                }
-                if (find) {
-                    d3.select(this).style('fill', color(index/t))
-                        .style('stroke', 'black');
-                } else {
-                    d3.select(this).style('fill', defultcolor('#big5', d))
-                        .style('stroke', 'none');
-                }
-                return find;
-            });
+                    if (find) {
+                        d3.select(this).style('fill', color(index / t))
+                            .style('stroke', 'black');
+                    } else {
+                        d3.select(this).style('fill', defultcolor('#big5', d))
+                            .style('stroke', 'none');
+                    }
+                    return find;
+                });
+            }
         }
 
         const {
@@ -432,10 +433,8 @@ function drawbig5(P, data, px) {
         // if we have no selection, just reset the brush highlight to no nodes
         if (!selection) {
             highlightBrushed([]);
-            highlightBrushed(brushedNodes);
             return;
         }
-
         // begin an array to collect the brushed nodes
         const brushedNodes = [];
 
@@ -495,7 +494,7 @@ function drawbig5(P, data, px) {
         radarchart('.radarChart', brushedNodes, radarChartOptions);
     }
 
-    let graph = d3.select('#graph').append('div');
+    let graph = d3.select('.graph').append('div');
     swapcolor(data, graph, '#big5', 'defult', '220px', '50px', 'defult');
     swapcolor(data, graph, '#big5', 'sEXT', '260px', '50px', 'BIG5.sEXT');
     swapcolor(data, graph, '#big5', 'sNEU', '300px', '50px', 'BIG5.sNEU');
@@ -503,7 +502,7 @@ function drawbig5(P, data, px) {
     swapcolor(data, graph, '#big5', 'sCON', '380px', '50px', 'BIG5.sCON');
     swapcolor(data, graph, '#big5', 'sOPN', '420px', '50px', 'BIG5.sOPN');
 
-    let svg = d3.select('#graph').append('svg')
+    let svg = d3.select('.graph').append('svg')
         .attr('width', width)
         .attr('height', height)
         .style('fill', 'none')
@@ -573,10 +572,10 @@ function drawproperty(P, data, px) {
     let min;
     for (let i = 0; i < P.length; i++) {
         for (let j = 0; j < 2; j++) {
-            if (P[i][j] > max || max == undefined) {
+            if (P[i][j] > max || max === undefined) {
                 max = P[i][j];
             }
-            if (P[i][j] < min || min == undefined) {
+            if (P[i][j] < min || min === undefined) {
                 min = P[i][j];
             }
         }
@@ -599,7 +598,7 @@ function drawproperty(P, data, px) {
     // .style("width","200px")
     // .style("height","30px");
 
-    let graph = d3.select('#graph').append('div');
+    let graph = d3.select('.graph').append('div');
     swapcolor(data, graph, '#property', 'defult', '460px', '50px', 'defult');
     swapcolor(data, graph, '#property', 'BETWEENNESS', '500px', '50px', 'PROPERTY.BETWEENNESS');
     swapcolor(data, graph, '#property', 'BROKERAGE', '540px', '50px', 'PROPERTY.BROKERAGE');
@@ -609,7 +608,7 @@ function drawproperty(P, data, px) {
     swapcolor(data, graph, '#property', 'NETWORKSIZE', '700px', '50px', 'PROPERTY.NETWORKSIZE');
     swapcolor(data, graph, '#property', 'TRANSITIVITY', '740px', '50px', 'PROPERTY.TRANSITIVITY');
 
-    let svg = d3.select('#graph').append('svg')
+    let svg = d3.select('.graph').append('svg')
         .attr('width', width)
         .attr('height', height)
         .style('fill', 'none')
@@ -668,7 +667,7 @@ function drawproperty(P, data, px) {
  * @param {object} point - user point object
  */
 function status(point) {
-    let table = '<table style="border:3px #23415a solid;" cellpadding="13" border="1"><tbody>';
+    let table = '<table><tbody>';
     table += '<tr>' +
         '<th width="6%">#</th>' +
         '<th width="90%">Status</th>' +
@@ -843,10 +842,10 @@ function colorscale(domain, value) {
  * @return {color}
  */
 function defultcolor(id, d) {
-    if (id == '#property') {
+    if (id === '#property') {
         return 'rgb(' + Math.round(d.PROPERTY.NBETWEENNESS) + ',' + Math.round(d.PROPERTY.NETWORKSIZE * 0.1) + ',' + Math.round(d.PROPERTY.TRANSITIVITY * 500) + ')';
     }
-    if (id == '#big5') {
+    if (id === '#big5') {
         return 'rgb(' + Math.round(d.BIG5.sEXT * 51) + ',' + Math.round(d.BIG5.sCON * 51) + ',' + Math.round(d.BIG5.sAGR * 51) + ')';
     }
 }
@@ -928,10 +927,13 @@ function radarchart(id, data, option) {
 
     // Filter for the outside glow
     let filter = g.append('defs').append('filter').attr('id', 'glow');
-    let feGaussianBlur = filter.append('feGaussianBlur').attr('stdDeviation', '2.5').attr('result', 'coloredBlur');
+    // let feGaussianBlur =
+    filter.append('feGaussianBlur').attr('stdDeviation', '2.5').attr('result', 'coloredBlur');
     let feMerge = filter.append('feMerge');
-    let feMergeNode1 = feMerge.append('feMergeNode').attr('in', 'coloredBlur');
-    let feMergeNode2 = feMerge.append('feMergeNode').attr('in', 'SourceGraphic');
+    // let feMergeNode1 =
+    feMerge.append('feMergeNode').attr('in', 'coloredBlur');
+    // let feMergeNode2 =
+    feMerge.append('feMergeNode').attr('in', 'SourceGraphic');
 
     let indata = [];
     for (let i = 0; i < data.length; i++) {
@@ -1052,7 +1054,7 @@ function radarchart(id, data, option) {
         .attr('class', 'radarArea')
         .attr('d', (d) => radarLine(d))
         .style('fill', function (d, i) {
-            return cfg.color(i/indata.length);
+            return cfg.color(i / indata.length);
         })
         .style('fill-opacity', cfg.opacityArea)
         .on('mouseover', function (d, i) {
@@ -1078,7 +1080,7 @@ function radarchart(id, data, option) {
         .attr('d', (d) => radarLine(d))
         .style('stroke-width', cfg.strokeWidth + 'px')
         .style('stroke', function (d, i) {
-            return cfg.color(i/indata.length);
+            return cfg.color(i / indata.length);
         })
         .style('fill', 'none')
         .style('filter', 'url(#glow)');
@@ -1088,7 +1090,7 @@ function radarchart(id, data, option) {
         .data(function (d, i) {
             let key = i;
             d3.select(this).style('fill', function (d, i) {
-                return cfg.color(key/indata.length);
+                return cfg.color(key / indata.length);
             });
             return d;
         })

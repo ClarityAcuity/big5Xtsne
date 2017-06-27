@@ -1,16 +1,65 @@
+/* reset css */
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 100%;
+    font: inherit;
+    vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure,
+footer, header, hgroup, menu, nav, section {
+display: block;
+}
+body {
+    line-height: 1;
+}
+ol, ul {
+    list-style: none;
+}
+blockquote, q {
+    quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+    content: '';
+    content: none;
+}
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+    padding: 13px;
+    border: 1px;
+    width:100%;
+    table-layout: fixed;
+}
+/* reset css end */
+
 body {
     background: lightgray;
     text-align: center;
-}
-
-h1 {
     font-family: "Times New Roman", Times, serif;
 }
 
 fieldset {
+    display: inline-block;
     border: 1px #af3333 solid;
     border-radius: 10px;
-    margin: 1px;
+    margin: 5px;
+    padding: 5px;
 }
 
 svg {
@@ -39,4 +88,40 @@ td{
     font-family: "Times New Roman", Times, serif;
     text-align: left;
     font: 15px sans-serif;
+}
+
+/* grid setting */
+.wrapper {
+    margin: 0 0 0 0;
+    border: 2px solid #CCC;
+    display: grid;
+    grid-gap: 10px;
+    grid-template-columns:  0.02fr [col1] 0.24fr [col2] 0.24fr [col3] 0.24fr [col4] 0.24fr [colend] 0.02fr;
+    grid-template-rows: [row1] auto [row2] 0.5fr [row3] 0.5fr [rowend];
+}
+
+.box {
+    background-color: #444;
+    color: #fff;
+    border-radius: 10px;
+    padding: 5px;
+    font-size: 100%;
+}
+
+.menu {
+    padding: 10px;
+    grid-column: col1 / colend;
+}
+
+.graph {
+    grid-column: col1 / col3;
+    grid-row: row2 / rowend;
+}
+
+.radarChart {
+    grid-column: col3 / colend;
+}
+
+.table {
+    grid-column: col3 / colend;
 }
