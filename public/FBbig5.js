@@ -1,4 +1,4 @@
-d3.csv('/mypersonality_final_fix.csv', function (d) {
+d3.csv('mypersonality_final_fix.csv', function (d) {
     // console.log(columns);
     // console.log(i);
     return d;
@@ -494,7 +494,7 @@ function drawbig5(P, data, px) {
         radarchart('.radarChart', brushedNodes, radarChartOptions);
     }
 
-    let graph = d3.select('.graph').append('div');
+    let graph = d3.select('.svg').append('div');
     swapcolor(data, graph, '#big5', 'defult', '220px', '50px', 'defult');
     swapcolor(data, graph, '#big5', 'sEXT', '260px', '50px', 'BIG5.sEXT');
     swapcolor(data, graph, '#big5', 'sNEU', '300px', '50px', 'BIG5.sNEU');
@@ -502,7 +502,10 @@ function drawbig5(P, data, px) {
     swapcolor(data, graph, '#big5', 'sCON', '380px', '50px', 'BIG5.sCON');
     swapcolor(data, graph, '#big5', 'sOPN', '420px', '50px', 'BIG5.sOPN');
 
-    let svg = d3.select('.graph').append('svg')
+    d3.select('.svg').select('#big5').remove();
+
+    let svg = d3.select('.svg').append('svg')
+        .attr('id', 'big5')
         .attr('width', width)
         .attr('height', height)
         .style('fill', 'none')
@@ -598,7 +601,7 @@ function drawproperty(P, data, px) {
     // .style("width","200px")
     // .style("height","30px");
 
-    let graph = d3.select('.graph').append('div');
+    let graph = d3.select('.svg').append('div');
     swapcolor(data, graph, '#property', 'defult', '460px', '50px', 'defult');
     swapcolor(data, graph, '#property', 'BETWEENNESS', '500px', '50px', 'PROPERTY.BETWEENNESS');
     swapcolor(data, graph, '#property', 'BROKERAGE', '540px', '50px', 'PROPERTY.BROKERAGE');
@@ -608,7 +611,10 @@ function drawproperty(P, data, px) {
     swapcolor(data, graph, '#property', 'NETWORKSIZE', '700px', '50px', 'PROPERTY.NETWORKSIZE');
     swapcolor(data, graph, '#property', 'TRANSITIVITY', '740px', '50px', 'PROPERTY.TRANSITIVITY');
 
-    let svg = d3.select('.graph').append('svg')
+    d3.select('.svg').select('#property').remove();
+
+    let svg = d3.select('.svg').append('svg')
+        .attr('id', 'property')
         .attr('width', width)
         .attr('height', height)
         .style('fill', 'none')
@@ -745,6 +751,7 @@ function submit(data) {
         };
     }
     console.log(data);
+    d3.select('.svg').selectAll('div').remove();
     drawbig5(Y, data, 500);
     drawproperty(Z, data, 500);
 }
@@ -761,6 +768,7 @@ function submit(data) {
  */
 function swapcolor(data, select, id, value, top, left, attribute) {
     // console.log(select.select(id).selectAll('circle'));
+    d3.select('svg').select('input').remove();
     select.append('input')
         .attr('type', 'button')
         .attr('class', 'btn btn-primary btn-xs')
