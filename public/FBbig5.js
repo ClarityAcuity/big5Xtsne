@@ -42,10 +42,42 @@ d3.csv('mypersonality_final_fix.csv', function (d) {
     }
     console.log(fbdata);
     // console.log(data);
-    let btn = document.querySelector('input[type="button"]');
+    // Y is an array of 2-D points that you can plot
+    let epsilon = getparam('epsilon');
+    let perplexity = getparam('perplexity');
+    let dim = 2;
+    let iteration = getparam('iteration');
+    let normalized = document.getElementsByName('normalize');
+    let normal = normalized[0].checked;
+    // console.log(normalized[0].checked);
+    let opt = {};
+    opt.epsilon = epsilon; // epsilon is learning rate (10 = default)
+    opt.perplexity = perplexity; // roughly how many neighbors each point influences (30 = default)
+    opt.dim = dim; // dimensionality of the embedding (2 = default)
+
+    let tsne1 = new tsnejs.tSNE(opt); // create a tSNE instance
+    let tsne2 = new tsnejs.tSNE(opt);
+    // initialize data. Here we have 3 points and some example pairwise dissimilarities
+    let inputs = [];
+    inputs.push(big5dist(fbdata, normal));
+    inputs.push(propertydist(fbdata, normal));
+    tsne1.initDataDist(inputs[0]);
+    tsne2.initDataDist(inputs[1]);
+    let btn = document.querySelector('input[id="submit"]');
     btn.addEventListener('click', function () {
         // console.log("on")
-        submit(fbdata);
+        submit(fbdata, tsne1, tsne2);
+    });
+    let ubtn = document.querySelector('input[id="update"]');
+    ubtn.addEventListener('click', function () {
+        // console.log("on")
+        for (let k = 0; k < iteration; k++) {
+            // setInterval(function () {
+            tsne1.step(); // every time you call this, solution gets better
+            tsne2.step(); // every time you call this, solution gets better
+            update(tsne1, tsne2, fbdata);
+            // }, 1000);
+        }
     });
 });
 
@@ -116,7 +148,7 @@ function minmax(d, type, attributes) {
         }
         temp.push(array);
     }
-    console.log(temp);
+    // console.log(temp);
     for (let j = 0; j < m - 1; j++) {
         // console.log(temp[j]);
         let value = [];
@@ -148,7 +180,7 @@ function normalize(pointlist) {
         }
         temp.push(array);
     }
-    console.log(temp);
+    // console.log(temp);
     for (let i = 0; i < n; i++) {
         for (let j = 0; j < m - 1; j++) {
             // console.log(temp[j]);
@@ -157,7 +189,7 @@ function normalize(pointlist) {
             pointlist[i][j + 1] = (pointlist[i][j + 1] - min) / (max - min);
         }
     }
-    console.log(pointlist);
+    // console.log(pointlist);
     return pointlist;
 }
 
@@ -266,25 +298,35 @@ function propertydist(data, normal) {
  * @param {object} data
  * @return {object}
  */
-function getplot(epsilon, perplexity, dim, iteration, data) {
-    let opt = {};
-    opt.epsilon = epsilon; // epsilon is learning rate (10 = default)
-    opt.perplexity = perplexity; // roughly how many neighbors each point influences (30 = default)
-    opt.dim = dim; // dimensionality of the embedding (2 = default)
-
-    let tsne = new tsnejs.tSNE(opt); // create a tSNE instance
-
-    // initialize data. Here we have 3 points and some example pairwise dissimilarities
-
-    let inputs = data;
+function getplot(tsne1, tsne2, data) {
     // console.log(dists);
+    update(tsne1, tsne2, data);
+    // console.log(data);
+    // return tsne.getSolution();
+}
 
-    tsne.initDataDist(inputs);
-
-    for (let k = 0; k < iteration; k++) {
-        tsne.step(); // every time you call this, solution gets better
+function update(tsne1, tsne2, data) {
+    let Y = tsne1.getSolution();
+    let Z = tsne2.getSolution();
+    console.log(Y);
+    // console.log(Z);
+    for (let i = 0; i < data.length; i++) {
+        data[i]['BPLOT'] = {
+            x: Y[i][0],
+            y: Y[i][1],
+        };
     }
-    return tsne.getSolution();
+    for (let i = 0; i < data.length; i++) {
+        data[i]['PPLOT'] = {
+            x: Z[i][0],
+            y: Z[i][1],
+        };
+    };
+    console.log('update');
+    d3.select('.svg').select('.big5').remove();
+    d3.select('.svg').select('.property').remove();
+    drawbig5(Y, data, 500);
+    drawproperty(Z, data, 500);
 }
 
 /**
@@ -318,8 +360,8 @@ function drawbig5(P, data, px) {
         .domain([min, max])
         .range([15, height - 15]);
 
-    let tooltip = d3.select('body').append('div')
-        .attr('class', 'tooltip')
+    let tooltip1 = d3.select('body').select('.a')
+        // .attr('class', 'tooltip1')
         .style('opacity', 0);
     // .style("width","200px")
     // .style("height","30px");
@@ -494,7 +536,8 @@ function drawbig5(P, data, px) {
         radarchart('.radarChart', brushedNodes, radarChartOptions);
     }
 
-    let graph = d3.select('.svg').append('div');
+    let graph = d3.select('.svg').append('div')
+        .attr('class', 'big5');
     swapcolor(data, graph, '#big5', 'defult', '220px', '50px', 'defult');
     swapcolor(data, graph, '#big5', 'sEXT', '260px', '50px', 'BIG5.sEXT');
     swapcolor(data, graph, '#big5', 'sNEU', '300px', '50px', 'BIG5.sNEU');
@@ -546,22 +589,22 @@ function drawbig5(P, data, px) {
                         return defultcolor('#property', s);
                     }
                 });
-            tooltip.transition()
+            tooltip1.transition()
                 .duration(200)
                 .style('opacity', .9);
-            tooltip.html('ID=' + d.AUTHID + '<br/>' + 'sAGR=' + d.BIG5.sAGR + '<br/>' + 'sCON=' + d.BIG5.sCON + '<br/>' + 'sEXT=' + d.BIG5.sEXT + '<br/>' + 'sNEU=' + d.BIG5.sNEU + '<br/>' + 'sOPN=' + d.BIG5.sOPN)
+            tooltip1.html('ID=' + d.AUTHID + '<br/>' + 'sAGR=' + d.BIG5.sAGR + '<br/>' + 'sCON=' + d.BIG5.sCON + '<br/>' + 'sEXT=' + d.BIG5.sEXT + '<br/>' + 'sNEU=' + d.BIG5.sNEU + '<br/>' + 'sOPN=' + d.BIG5.sOPN)
                 .style('left', (d3.event.pageX + 5) + 'px')
                 .style('top', (d3.event.pageY - 30) + 'px');
         })
         .on('mouseout', function (d) {
-            tooltip.transition()
+            tooltip1.transition()
                 .duration(500)
                 .style('opacity', 0);
         })
         .on('click', function (d) {
             status(d);
         });
-    // console.log();
+    console.log('g');
 }
 
 /**
@@ -595,13 +638,14 @@ function drawproperty(P, data, px) {
         .domain([min, max])
         .range([15, height - 15]);
 
-    let tooltip = d3.select('body').append('div')
-        .attr('class', 'tooltip')
+    let tooltip2 = d3.select('body').select('.b')
+        // .attr('class', 'tooltip2')
         .style('opacity', 0);
     // .style("width","200px")
     // .style("height","30px");
 
-    let graph = d3.select('.svg').append('div');
+    let graph = d3.select('.svg').append('div')
+        .attr('class', 'property');
     swapcolor(data, graph, '#property', 'defult', '460px', '50px', 'defult');
     swapcolor(data, graph, '#property', 'BETWEENNESS', '500px', '50px', 'PROPERTY.BETWEENNESS');
     swapcolor(data, graph, '#property', 'BROKERAGE', '540px', '50px', 'PROPERTY.BROKERAGE');
@@ -623,6 +667,9 @@ function drawproperty(P, data, px) {
             .scaleExtent([1 / 2, 4])
             .on('zoom', function () {
                 g.attr('transform', d3.event.transform);
+                let k = this.__zoom.k;
+                g.selectAll('.circle').attr('r', 5 / k)
+                    .attr('stroke-width', 1 / k);
             }));
     let g = svg.append('g')
         .attr('id', 'property');
@@ -651,15 +698,15 @@ function drawproperty(P, data, px) {
                         return defultcolor('#big5', s);
                     }
                 });
-            tooltip.transition()
+            tooltip2.transition()
                 .duration(200)
                 .style('opacity', .9);
-            tooltip.html('ID=' + d.AUTHID + '<br/>' + 'BETWEENNESS=' + d.PROPERTY.BETWEENNESS + '<br/>' + 'BROKERAGE=' + d.PROPERTY.BROKERAGE + '<br/>' + 'DENSITY=' + d.PROPERTY.DENSITY + '<br/>' + 'NBETWEENNESS=' + d.PROPERTY.NBETWEENNESS + '<br/>' + 'NBROKERAGE=' + d.PROPERTY.NBROKERAGE + '<br/>' + 'NETWORKSIZE=' + d.PROPERTY.NETWORKSIZE + '<br/>' + 'TRANSITIVITY=' + d.PROPERTY.TRANSITIVITY)
+            tooltip2.html('ID=' + d.AUTHID + '<br/>' + 'BETWEENNESS=' + d.PROPERTY.BETWEENNESS + '<br/>' + 'BROKERAGE=' + d.PROPERTY.BROKERAGE + '<br/>' + 'DENSITY=' + d.PROPERTY.DENSITY + '<br/>' + 'NBETWEENNESS=' + d.PROPERTY.NBETWEENNESS + '<br/>' + 'NBROKERAGE=' + d.PROPERTY.NBROKERAGE + '<br/>' + 'NETWORKSIZE=' + d.PROPERTY.NETWORKSIZE + '<br/>' + 'TRANSITIVITY=' + d.PROPERTY.TRANSITIVITY)
                 .style('left', (d3.event.pageX + 5) + 'px')
                 .style('top', (d3.event.pageY - 30) + 'px');
         })
         .on('mouseout', function (d) {
-            tooltip.transition()
+            tooltip2.transition()
                 .duration(500)
                 .style('opacity', 0);
         })
@@ -687,7 +734,7 @@ function status(point) {
     }
     table += '</tbody></table>';
     let div = document.getElementById('table');
-    console.log(div);
+    // console.log(div);
     let index = div.innerHTML.indexOf('<table');
     div.innerHTML = div.innerHTML.slice(0, index);
     div.innerHTML += table;
@@ -717,7 +764,7 @@ function formchecked(query) {
         let id = form[i].id;
         checked[id] = form[i].checked;
     }
-    console.log(checked);
+    // console.log(checked);
     // return value;
     return checked;
 }
@@ -726,18 +773,12 @@ function formchecked(query) {
  * sumit option and render
  * @param {object} data - source data
  */
-function submit(data) {
-    // Y is an array of 2-D points that you can plot
-    let epsilon = getparam('epsilon');
-    let perplexity = getparam('perplexity');
-    let dim = 2;
-    let iteration = getparam('iteration');
-    let normalized = document.getElementsByName('normalize');
-    let normal = normalized[0].checked;
-    // console.log(normalized[0].checked);
-    let Y = getplot(epsilon, perplexity, dim, iteration, big5dist(data, normal));
-    let Z = getplot(epsilon, perplexity, dim, iteration, propertydist(data, normal));
+function submit(data, tsne1, tsne2) {
+    getplot(tsne1, tsne2, data);
+    // let Y = getplot(epsilon, perplexity, dim, iteration, big5dist(data, normal));
+    // let Z = getplot(epsilon, perplexity, dim, iteration, propertydist(data, normal));
     // console.log(Y);
+    /*
     for (let i = 0; i < data.length; i++) {
         data[i]['BPLOT'] = {
             x: Y[i][0],
@@ -754,6 +795,7 @@ function submit(data) {
     d3.select('.svg').selectAll('div').remove();
     drawbig5(Y, data, 500);
     drawproperty(Z, data, 500);
+    */
 }
 
 /**
